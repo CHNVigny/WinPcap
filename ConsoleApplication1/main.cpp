@@ -73,8 +73,10 @@ int main() {
 	ip_header *ih;                                    //ip头部  
 	udp_header *uh;                             //udp头部 
 	tcp_header *th;								//tcp头部
-	u_int ip_len;                                       //ip地址有效长度  
+	u_int ip_len;                                       //ip地址有效长度 
+	u_int tcp_len;										//tcp有效长度
 	u_short sport, dport;                        //主机字节序列  
+	u_char *pkt;
 												 //time_t local_tv_sec;              //和时间处理有关的变量  
 												 //char timestr[16];                 //和时间处理有关的变量  
 												 /**
@@ -260,16 +262,17 @@ int main() {
 			ih = (ip_header *)(pkt_data + 14);    //14为以太网帧头部长度  
 												  //获得tcp头部的位置  
 			ip_len = (ih->ver_ihl & 0xf) * 4;
-			
 			th = (tcp_header *)((u_char *)ih + ip_len);
+			tcp_len = (th->th_lenres & 0xf0) / 4;
+			pkt = (u_char *)((u_char *)th + tcp_len);
 
 			/* 将网络字节序列转换成主机字节序列 */
 			sport = ntohs(th->sport);
 			dport = ntohs(th->dport);
-			if (sport == 80 || dport == 80){
+			if (dport == 80){
 				printf("%.6ld len:%d ", header->ts.tv_usec, header->len);
 				printf("ip_length:%d ", ip_len);
-				printf("from: %d.%d.%d.%d:%d to: %d.%d.%d.%d:%d\n",
+				printf("from: %d.%d.%d.%d:%d to: %d.%d.%d.%d:%d ",
 					ih->saddr.byte1,
 					ih->saddr.byte2,
 					ih->saddr.byte3,
@@ -280,6 +283,9 @@ int main() {
 					ih->daddr.byte3,
 					ih->daddr.byte4,
 					dport);
+				printf("tcp length:%d\n", tcp_len);
+				printf("data : %s\n", pkt);
+				printf("--------------********--------------\n");
 				/* 打印IP地址和TCP端口 */
 			}
 			
